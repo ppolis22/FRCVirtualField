@@ -1,6 +1,6 @@
 package org.buzz.projectiondemo.controller;
 
-import org.buzz.projectiondemo.model.Color;
+import org.buzz.projectiondemo.model.SquareColor;
 import org.buzz.projectiondemo.model.ConvertableMat;
 import org.buzz.projectiondemo.model.GameState;
 import org.buzz.projectiondemo.model.ProcessResult;
@@ -84,7 +84,11 @@ public class FrameProcessor {
 
     private GameState calculateGameState(List<MatOfPoint> contours) {
         GameState gameState = new GameState();
-        gameState.setSquareValue(Color.RED, 1, 1);
+        if (contours.size() < 3) {
+            gameState.setSquareValue(SquareColor.RED, 1, 1);
+        } else {
+            gameState.setSquareValue(SquareColor.NONE, 1, 1);
+        }
         return gameState;
     }
 

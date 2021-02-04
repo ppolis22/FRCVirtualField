@@ -14,7 +14,7 @@ public class AppController {
     private final ProjectionController projectionController;
     private ScheduledExecutorService executor;
     private final Camera camera = new Camera();
-    private final FrameProcessor engine = new FrameProcessor();
+    private final FrameProcessor processor = new FrameProcessor();
     private boolean isProcessing = false;
 
     public AppController(ControlPanelController controlPanelController,
@@ -32,6 +32,7 @@ public class AppController {
         } else {
             stopProcessingLoop();
         }
+        controlPanelController.setCameraButtonStatus(isProcessing);
     }
 
     private void startProcessingLoop() {
@@ -42,6 +43,7 @@ public class AppController {
             executor.scheduleAtFixedRate(this::process, 0, 100, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             System.out.print(e.getMessage());
+            stopProcessingLoop();
         }
     }
 
@@ -62,7 +64,7 @@ public class AppController {
     private void process() {
         Scalar minValues = controlPanelController.getMinValues();
         Scalar maxValues = controlPanelController.getMaxValues();
-        ProcessResult result = engine.process(camera.getFrame(), minValues, maxValues);
+        ProcessResult result = processor.process(camera.getFrame(), minValues, maxValues);
         projectionController.updateProjectionView(result.gameState);
         controlPanelController.drawMainImage(result.mainMat);
         controlPanelController.drawThreshImage(result.threshMat);

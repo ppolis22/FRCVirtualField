@@ -50,7 +50,7 @@ public class ControlPanelController extends ViewController {
         appController.toggleProcessingLoop();
     }
 
-    public void setCameraButtonText(boolean isProcessing) {
+    public void setCameraButtonStatus(boolean isProcessing) {
         if (isProcessing) {
             cameraButton.setText("Stop Camera");
         } else {

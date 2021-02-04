@@ -3,14 +3,16 @@ package org.buzz.projectiondemo.model;
 import org.opencv.core.Mat;
 import org.opencv.videoio.VideoCapture;
 
+import java.io.IOException;
+
 public class Camera {
 
-    private VideoCapture videoCapture = new VideoCapture();
+    private final VideoCapture videoCapture = new VideoCapture();
 
-    public void start() throws Exception {
+    public void start() throws IOException {
         videoCapture.open(0);
         if (!videoCapture.isOpened()) {
-            throw new Exception("Unable to open camera");
+            throw new IOException("Unable to open camera");
         }
     }
 
