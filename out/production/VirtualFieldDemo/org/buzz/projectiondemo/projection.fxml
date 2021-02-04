@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane fx:controller="org.buzz.projectiondemo.controller.ProjectionController" xmlns:fx="http://javafx.com/fxml">
+    <center>
+        <ImageView fx:id="projectionImage"/>
+    </center>
+</BorderPane>

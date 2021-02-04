@@ -8,7 +8,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Separator?>
-<BorderPane fx:controller="org.buzz.projectiondemo.controller.Controller" xmlns:fx="http://javafx.com/fxml">
+<BorderPane fx:controller="org.buzz.projectiondemo.controller.ControlPanelController" xmlns:fx="http://javafx.com/fxml">
     <right>
         <VBox alignment="CENTER">
             <padding>
@@ -45,7 +45,7 @@
             <padding>
                 <Insets right="25" left="25" />
             </padding>
-            <Button fx:id="cameraButton" text="Start Camera" onAction="#toggleProcessingLoop"/>
+            <Button fx:id="cameraButton" text="Start Camera" onAction="#toggleProcessingBtnPressed"/>
             <Separator />
             <Label fx:id="debugOutput" />
         </VBox>

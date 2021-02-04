@@ -1,42 +1,47 @@
 package org.buzz.projectiondemo.controller;
 
+import org.buzz.projectiondemo.model.Color;
 import org.buzz.projectiondemo.model.ConvertableMat;
+import org.buzz.projectiondemo.model.GameState;
+import org.buzz.projectiondemo.model.ProcessResult;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GameEngine {
+public class FrameProcessor {
 
     private AppState state = AppState.CALIBRATING;
-    private final AppViewController viewController;
 
-    public GameEngine(AppViewController viewController) {
-        this.viewController = viewController;
-    }
-
-    public void process(Mat input, Scalar minThreshVals, Scalar maxThreshVals) {
+    public ProcessResult process(Mat input, Scalar minThreshVals, Scalar maxThreshVals) {
         switch (state) {
-            case CALIBRATING -> calibrateToGrid();
-            case FINDING_OBJECTS -> processObjects(input, minThreshVals, maxThreshVals);
+            case CALIBRATING -> { return calibrateToGrid(); }
+            case FINDING_OBJECTS -> { return detectObjects(input, minThreshVals, maxThreshVals); }
+            default -> { return ProcessResult.EMPTY; }
         }
     }
 
-    private void calibrateToGrid() {
+    private ProcessResult calibrateToGrid() {
         // TODO
+        // project calibration image
+        // locate markers
+        // calculate virtual grid
+        // project grid image
         state = AppState.FINDING_OBJECTS;
+        return ProcessResult.EMPTY;
     }
 
-    private void processObjects(Mat input, Scalar minThreshVals, Scalar maxThreshVals) {
+    private ProcessResult detectObjects(Mat input, Scalar minThreshVals, Scalar maxThreshVals) {
         ConvertableMat mainMat = new ConvertableMat();
         input.copyTo(mainMat);
         ConvertableMat threshMat = applyHSVFilter(mainMat, minThreshVals, maxThreshVals);
         ConvertableMat denoisedMat = denoiseImage(threshMat);
-        findAndDrawContours(denoisedMat, mainMat);
-        viewController.drawMainImage(mainMat);
-        viewController.drawThreshImage(threshMat);
-        viewController.drawDenoisedImage(denoisedMat);
+        List<MatOfPoint> contours = findContours(denoisedMat);
+        drawContours(contours, mainMat);
+        GameState gameState = calculateGameState(contours);
+        return new ProcessResult(gameState, mainMat, threshMat, denoisedMat,
+                "Contours found: " + contours.size());
     }
 
     private ConvertableMat applyHSVFilter(Mat inputMat, Scalar minThreshVals, Scalar maxThreshVals) {
@@ -61,18 +66,26 @@ public class GameEngine {
         return deNoisedMat;
     }
 
-    private void findAndDrawContours(Mat inputMat, Mat toRenderOn) {
+    private List<MatOfPoint> findContours(Mat inputMat) {
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
 
         Imgproc.findContours(inputMat, contours, hierarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);
-        viewController.writeDebugString("Contours found: " + contours.size());
+        return contours;
+    }
 
+    private void drawContours(List<MatOfPoint> contours, Mat toRenderOn) {
         if (!contours.isEmpty()) {
             for (int i = 0; i < contours.size(); i++) {
                 Imgproc.drawContours(toRenderOn, contours.subList(i, i + 1), -1, new Scalar(250, 0, 0));
             }
         }
+    }
+
+    private GameState calculateGameState(List<MatOfPoint> contours) {
+        GameState gameState = new GameState();
+        gameState.setSquareValue(Color.RED, 1, 1);
+        return gameState;
     }
 
     private enum AppState {

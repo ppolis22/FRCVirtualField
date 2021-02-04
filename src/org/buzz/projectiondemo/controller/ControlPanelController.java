@@ -1,6 +1,5 @@
 package org.buzz.projectiondemo.controller;
 
-import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
@@ -18,11 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class Controller implements AppViewController {
-    private GameEngine engine;
-    private ScheduledExecutorService executor;
-    private VideoCapture videoCapture;
-    private boolean isProcessing = false;
+public class ControlPanelController extends ViewController {
+
     private ObjectProperty<String> debugOutputProp;
 
     @FXML private ImageView cameraFrame;
@@ -47,56 +43,27 @@ public class Controller implements AppViewController {
         morphImage.setPreserveRatio(true);
         debugOutputProp = new SimpleObjectProperty<>();
         debugOutput.textProperty().bind(debugOutputProp);
-
-        videoCapture = new VideoCapture();
-        engine = new GameEngine(this);
     }
 
     @FXML
-    private void toggleProcessingLoop() {
-        if (!isProcessing) {
-            startProcessingLoop();
-        } else {
-            stopProcessingLoop();
-        }
+    private void toggleProcessingBtnPressed() {
+        appController.toggleProcessingLoop();
     }
 
-    private void startProcessingLoop() {
-        videoCapture.open(0);
-        if (videoCapture.isOpened()) {
-            isProcessing = true;
-            executor = Executors.newSingleThreadScheduledExecutor();
-            executor.scheduleAtFixedRate(this::processFeedAndRender, 0, 100, TimeUnit.MILLISECONDS);
+    public void setCameraButtonText(boolean isProcessing) {
+        if (isProcessing) {
             cameraButton.setText("Stop Camera");
         } else {
-            System.out.print("Unable to open camera feed.");
-        }
-    }
-
-    private void stopProcessingLoop() {
-        if (executor != null && !executor.isShutdown()) {
-            isProcessing = false;
             cameraButton.setText("Start Camera");
-            try {
-                executor.shutdown();
-                executor.awaitTermination(101, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                System.out.println(Arrays.toString(e.getStackTrace()));
-                System.out.print("Unable to properly shut down. Attempting to release camera...");
-            }
-
-            if (videoCapture.isOpened()) {
-                videoCapture.release();
-            }
         }
     }
 
-    private void processFeedAndRender() {
-        Mat frame = new Mat();
-        videoCapture.read(frame);
-        Scalar minValues = new Scalar(hueStart.getValue(), saturationStart.getValue(), valueStart.getValue());
-        Scalar maxValues = new Scalar(hueStop.getValue(), saturationStop.getValue(), valueStop.getValue());
-        engine.process(frame, minValues, maxValues);
+    public Scalar getMinValues() {
+        return new Scalar(hueStart.getValue(), saturationStart.getValue(), valueStart.getValue());
+    }
+
+    public Scalar getMaxValues() {
+        return new Scalar(hueStop.getValue(), saturationStop.getValue(), valueStop.getValue());
     }
 
     public void writeDebugString(String message) {
@@ -113,9 +80,5 @@ public class Controller implements AppViewController {
 
     public void drawDenoisedImage(ConvertableMat mat) {
         updateFXProperty(morphImage.imageProperty(), mat.asImage());
-    }
-
-    public <T> void updateFXProperty(final ObjectProperty<T> property, final T value) {
-        Platform.runLater(() -> property.set(value));
     }
 }
