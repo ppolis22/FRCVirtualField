@@ -58,11 +58,11 @@ public class ControlPanelController extends ViewController {
         }
     }
 
-    public Scalar getMinValues() {
+    public Scalar getMinHsvValues() {
         return new Scalar(hueStart.getValue(), saturationStart.getValue(), valueStart.getValue());
     }
 
-    public Scalar getMaxValues() {
+    public Scalar getMaxHsvValues() {
         return new Scalar(hueStop.getValue(), saturationStop.getValue(), valueStop.getValue());
     }
 
