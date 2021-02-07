@@ -3,10 +3,13 @@ package org.buzz.projectiondemo.controller;
 import org.buzz.projectiondemo.model.Camera;
 import org.buzz.projectiondemo.model.GameState;
 import org.buzz.projectiondemo.model.ProcessResult;
-import org.opencv.core.*;
-import org.opencv.imgproc.Imgproc;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +21,9 @@ public class AppController {
     private final Camera camera = new Camera();
     private final FrameProcessor frameProcessor = new FrameProcessor();
     private final GameStateCalculator gameStateCalculator = new GameStateCalculator();
+    private final CalibrationSolver calibrationSolver = new CalibrationSolver();
     private boolean isProcessing = false;
+    private List<Point> calibrationPoints = new ArrayList<>();
     private AppState appState = AppState.CALIBRATING;
 
     public AppController(ControlPanelController controlPanelController,
@@ -37,6 +42,13 @@ public class AppController {
             stopProcessingLoop();
         }
         controlPanelController.setCameraButtonStatus(isProcessing);
+    }
+
+    public void lockInCalibration() {
+        controlPanelController.setContinueButtonState(false);
+        gameStateCalculator.calibrate(calibrationPoints.get(0), calibrationPoints.get(1),
+                calibrationPoints.get(2), calibrationPoints.get(3));
+        appState = AppState.FINDING_OBJECTS;
     }
 
     private void startProcessingLoop() {
@@ -67,49 +79,40 @@ public class AppController {
 
     private void process() {
         try {
+            Scalar minHsvValues = controlPanelController.getMinHsvValues();
+            Scalar maxHsvValues = controlPanelController.getMaxHsvValues();
+            ProcessResult result= frameProcessor.process(camera.getFrame(), minHsvValues, maxHsvValues);
             switch (appState) {
-                case CALIBRATING -> calibrateToGrid();
-                case FINDING_OBJECTS -> detectObjects();
+                case CALIBRATING -> calibrateToGrid(result);
+                case FINDING_OBJECTS -> detectObjects(result);
             }
+            controlPanelController.drawMainImage(result.mainMat);
+            controlPanelController.drawThreshImage(result.threshMat);
+            controlPanelController.drawDenoisedImage(result.denoiseMat);
+            controlPanelController.writeDebugString(result.debugMessage);
         } catch (Throwable e) {
             System.out.println("Throwable caught: ");
             e.printStackTrace();
         }
     }
 
-    private void calibrateToGrid() {
+    private void calibrateToGrid(ProcessResult result) {
+        result.debugMessage = "Searching for calibration image.";
         projectionController.showCalibrationImage();
-        // locate markers, use frame processor?
-        controlPanelController.writeDebugString("Searching for calibration image.");
-        boolean calibrationImageRecognized = true;
-        if (calibrationImageRecognized) {
-            gameStateCalculator.calibrate(new Point(100, 100), new Point(700, 100),
-                    new Point(100, 700), new Point(700, 700));
-            appState = AppState.FINDING_OBJECTS;
+        List<Point> corners = calibrationSolver.getBoardCornerPoints(result.contours);
+        if (!corners.isEmpty()) {
+            controlPanelController.setContinueButtonState(true);
+            calibrationPoints = corners;
+            controlPanelController.drawCalibrationPoints(result.mainMat, calibrationPoints);
         }
     }
 
-    private void detectObjects() {
-        Scalar minHsvValues = controlPanelController.getMinHsvValues();
-        Scalar maxHsvValues = controlPanelController.getMaxHsvValues();
-        ProcessResult result = frameProcessor.process(camera.getFrame(), minHsvValues, maxHsvValues);
-
+    private void detectObjects(ProcessResult result) {
         MatOfPoint2f[][] zones = gameStateCalculator.getBoardZones();
+        controlPanelController.drawBoardZones(zones, result.mainMat);
+
         GameState gameState = gameStateCalculator.calculate(result.contours);
-
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                MatOfPoint mop = new MatOfPoint();
-                zones[i][j].convertTo(mop, CvType.CV_32S);
-                Imgproc.drawContours(result.mainMat, Arrays.asList(mop), -1, new Scalar(250, 0, 0));
-            }
-        }
         projectionController.updateProjectionView(gameState);
-
-        controlPanelController.drawMainImage(result.mainMat);
-        controlPanelController.drawThreshImage(result.threshMat);
-        controlPanelController.drawDenoisedImage(result.denoiseMat);
-        controlPanelController.writeDebugString(result.debugMessage);
     }
 
     private enum AppState {

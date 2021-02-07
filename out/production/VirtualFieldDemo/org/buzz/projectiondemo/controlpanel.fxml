@@ -45,7 +45,10 @@
             <padding>
                 <Insets right="25" left="25" />
             </padding>
-            <Button fx:id="cameraButton" text="Start Camera" onAction="#toggleProcessingBtnPressed"/>
+            <HBox>
+                <Button fx:id="cameraButton" text="Start Camera" onAction="#toggleProcessingBtnPressed"/>
+                <Button fx:id="continueButton" text="Continue" onAction="#continueButtonPressed" disable="true"/>
+            </HBox>
             <Separator />
             <Label fx:id="debugOutput" />
         </VBox>

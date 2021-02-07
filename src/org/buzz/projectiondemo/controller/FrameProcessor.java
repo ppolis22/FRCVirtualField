@@ -13,12 +13,19 @@ public class FrameProcessor {
     public ProcessResult process(Mat input, Scalar minThreshVals, Scalar maxThreshVals) {
         ConvertableMat mainMat = new ConvertableMat();
         input.copyTo(mainMat);
-        ConvertableMat threshMat = applyHSVFilter(mainMat, minThreshVals, maxThreshVals);
+        ConvertableMat blurredMat = blur(mainMat);
+        ConvertableMat threshMat = applyHSVFilter(blurredMat, minThreshVals, maxThreshVals);
         ConvertableMat denoisedMat = denoiseImage(threshMat);
         List<Contour> contours = findContours(denoisedMat);
 //        drawContours(contours, mainMat);
         return new ProcessResult(contours, mainMat, threshMat, denoisedMat,
                 "Contours found: " + contours.size());
+    }
+
+    private ConvertableMat blur(Mat inputMat) {
+        ConvertableMat blurredMat = new ConvertableMat();
+        Imgproc.blur(inputMat, blurredMat, new Size(5, 5));
+        return blurredMat;
     }
 
     private ConvertableMat applyHSVFilter(Mat inputMat, Scalar minThreshVals, Scalar maxThreshVals) {
@@ -35,10 +42,10 @@ public class FrameProcessor {
         Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(12, 12));
 
         Imgproc.erode(inputMat, deNoisedMat, erodeElement);
-        Imgproc.erode(deNoisedMat, deNoisedMat, erodeElement);
+//        Imgproc.erode(deNoisedMat, deNoisedMat, erodeElement);
 
         Imgproc.dilate(deNoisedMat, deNoisedMat, dilateElement);
-        Imgproc.dilate(deNoisedMat, deNoisedMat, dilateElement);
+//        Imgproc.dilate(deNoisedMat, deNoisedMat, dilateElement);
 
         return deNoisedMat;
     }

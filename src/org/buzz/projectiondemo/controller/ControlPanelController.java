@@ -8,11 +8,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.image.ImageView;
 import org.buzz.projectiondemo.model.ConvertableMat;
-import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
+import org.opencv.core.*;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,7 @@ public class ControlPanelController extends ViewController {
     @FXML private ImageView maskImage;
     @FXML private ImageView morphImage;
     @FXML private Button cameraButton;
+    @FXML private Button continueButton;
     @FXML private Slider hueStart;
     @FXML private Slider hueStop;
     @FXML private Slider saturationStart;
@@ -50,6 +52,11 @@ public class ControlPanelController extends ViewController {
         appController.toggleProcessingLoop();
     }
 
+    @FXML
+    private void continueButtonPressed() {
+        appController.lockInCalibration();
+    }
+
     public void setCameraButtonStatus(boolean isProcessing) {
         if (isProcessing) {
             cameraButton.setText("Stop Camera");
@@ -66,6 +73,16 @@ public class ControlPanelController extends ViewController {
         return new Scalar(hueStop.getValue(), saturationStop.getValue(), valueStop.getValue());
     }
 
+    public void drawBoardZones(MatOfPoint2f[][] zoneContours, ConvertableMat destinationMat) {
+        for (MatOfPoint2f[] zoneRow : zoneContours) {
+            for (MatOfPoint2f zone : zoneRow) {
+                MatOfPoint mop = new MatOfPoint();
+                zone.convertTo(mop, CvType.CV_32S);
+                Imgproc.drawContours(destinationMat, Arrays.asList(mop), -1, new Scalar(250, 0, 0), 2);
+            }
+        }
+    }
+
     public void writeDebugString(String message) {
         updateFXProperty(debugOutputProp, message);
     }
@@ -80,5 +97,15 @@ public class ControlPanelController extends ViewController {
 
     public void drawDenoisedImage(ConvertableMat mat) {
         updateFXProperty(morphImage.imageProperty(), mat.asImage());
+    }
+
+    public void setContinueButtonState(boolean enabled) {
+        continueButton.setDisable(!enabled);
+    }
+
+    public void drawCalibrationPoints(ConvertableMat mainMat, List<Point> points) {
+        for (Point point : points) {
+            Imgproc.circle(mainMat, point, 5, new Scalar(0, 0, 255));
+        }
     }
 }
