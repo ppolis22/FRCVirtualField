@@ -1,15 +1,15 @@
 package org.buzz.projectiondemo.controller;
 
 import org.buzz.projectiondemo.model.Camera;
+import org.buzz.projectiondemo.model.ConvertableMat;
 import org.buzz.projectiondemo.model.GameState;
 import org.buzz.projectiondemo.model.ProcessResult;
+import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,9 +21,8 @@ public class AppController {
     private final Camera camera = new Camera();
     private final FrameProcessor frameProcessor = new FrameProcessor();
     private final GameStateCalculator gameStateCalculator = new GameStateCalculator();
-    private final CalibrationSolver calibrationSolver = new CalibrationSolver();
     private boolean isProcessing = false;
-    private List<Point> calibrationPoints = new ArrayList<>();
+    private double cameraFrameDisplayRatio = 1.0;
     private AppState appState = AppState.CALIBRATING;
 
     public AppController(ControlPanelController controlPanelController,
@@ -44,17 +43,24 @@ public class AppController {
         controlPanelController.setCameraButtonStatus(isProcessing);
     }
 
+    public void updateCornerPoint(double x, double y) {
+        gameStateCalculator.addCornerPoint(new Point(x * cameraFrameDisplayRatio, y * cameraFrameDisplayRatio));
+    }
+
     public void lockInCalibration() {
         controlPanelController.setContinueButtonState(false);
-        gameStateCalculator.calibrate(calibrationPoints.get(0), calibrationPoints.get(1),
-                calibrationPoints.get(2), calibrationPoints.get(3));
+        gameStateCalculator.calibrateToSetPoints();
         appState = AppState.FINDING_OBJECTS;
     }
 
     private void startProcessingLoop() {
         try {
             camera.start();
+            Mat sampleFrame = camera.getFrame();
+            cameraFrameDisplayRatio = (double)sampleFrame.width() / (double)ControlPanelController.MAIN_FRAME_DISPLAY_WIDTH;
+            System.out.println("Ratio: " + cameraFrameDisplayRatio);
             isProcessing = true;
+            controlPanelController.writeDebugString("Click on the red corner to calibrate...");
             executor = Executors.newSingleThreadScheduledExecutor();
             executor.scheduleAtFixedRate(this::process, 0, 100, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
@@ -79,40 +85,44 @@ public class AppController {
 
     private void process() {
         try {
-            Scalar minHsvValues = controlPanelController.getMinHsvValues();
-            Scalar maxHsvValues = controlPanelController.getMaxHsvValues();
-            ProcessResult result= frameProcessor.process(camera.getFrame(), minHsvValues, maxHsvValues);
             switch (appState) {
-                case CALIBRATING -> calibrateToGrid(result);
-                case FINDING_OBJECTS -> detectObjects(result);
+                case CALIBRATING -> calibrateToGrid();
+                case FINDING_OBJECTS -> detectObjects();
             }
-            controlPanelController.drawMainImage(result.mainMat);
-            controlPanelController.drawThreshImage(result.threshMat);
-            controlPanelController.drawDenoisedImage(result.denoiseMat);
-            controlPanelController.writeDebugString(result.debugMessage);
         } catch (Throwable e) {
             System.out.println("Throwable caught: ");
             e.printStackTrace();
         }
     }
 
-    private void calibrateToGrid(ProcessResult result) {
-        result.debugMessage = "Searching for calibration image.";
-        projectionController.showCalibrationImage();
-        List<Point> corners = calibrationSolver.getBoardCornerPoints(result.contours);
-        if (!corners.isEmpty()) {
-            controlPanelController.setContinueButtonState(true);
-            calibrationPoints = corners;
-            controlPanelController.drawCalibrationPoints(result.mainMat, calibrationPoints);
-        }
+    private void calibrateToGrid() {
+        Mat frame = camera.getFrame();
+        ConvertableMat mainMat = new ConvertableMat();
+        frame.copyTo(mainMat);
+        int cornersPlaced = gameStateCalculator.getNumCornersPlaced();
+        projectionController.showCalibrationImage(cornersPlaced);
+        controlPanelController.setContinueButtonState(cornersPlaced == 4);
+        controlPanelController.drawMainImage(mainMat);
     }
 
-    private void detectObjects(ProcessResult result) {
+    private void detectObjects() {
+        Scalar minHsvValues = controlPanelController.getMinHsvValues();
+        Scalar maxHsvValues = controlPanelController.getMaxHsvValues();
+        ProcessResult result= frameProcessor.process(camera.getFrame(), minHsvValues, maxHsvValues);
+
         MatOfPoint2f[][] zones = gameStateCalculator.getBoardZones();
         controlPanelController.drawBoardZones(zones, result.mainMat);
 
         GameState gameState = gameStateCalculator.calculate(result.contours);
         projectionController.updateProjectionView(gameState);
+
+        result.debugMessage = controlPanelController.getMinHsvValues().toString() + " -> " +
+                controlPanelController.getMaxHsvValues().toString();
+
+        controlPanelController.drawMainImage(result.mainMat);
+        controlPanelController.drawThreshImage(result.threshMat);
+        controlPanelController.drawDenoisedImage(result.denoiseMat);
+        controlPanelController.writeDebugString(result.debugMessage);
     }
 
     private enum AppState {

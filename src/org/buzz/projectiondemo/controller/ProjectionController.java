@@ -7,15 +7,24 @@ import javafx.scene.paint.Color;
 import org.buzz.projectiondemo.model.SquareColor;
 import org.buzz.projectiondemo.model.GameState;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ProjectionController extends ViewController {
     private final int canvasWidth = 600;
     private final int canvasHeight = 600;
+    private final List<CalibrationPoint> calibrationPoints = new ArrayList<>();
     @FXML private Canvas canvas;
 
     @FXML
     public void initialize() {
         canvas.setWidth(canvasWidth);
         canvas.setHeight(canvasHeight);
+        int calPtSize = 25;
+        calibrationPoints.add(new CalibrationPoint(0, 0, calPtSize, calPtSize, 0));
+        calibrationPoints.add(new CalibrationPoint(canvasWidth - calPtSize, 0, calPtSize, calPtSize, 1));
+        calibrationPoints.add(new CalibrationPoint(0, canvasHeight - calPtSize, calPtSize, calPtSize, 2));
+        calibrationPoints.add(new CalibrationPoint(canvasWidth - calPtSize, canvasHeight - calPtSize, calPtSize, calPtSize, 3));
     }
 
     public void updateProjectionView(GameState gameState) {
@@ -25,16 +34,13 @@ public class ProjectionController extends ViewController {
         drawBoardLines(g);
     }
 
-    public void showCalibrationImage() {
+    public void showCalibrationImage(int numPlaced) {
         GraphicsContext g = canvas.getGraphicsContext2D();
-        int markWidth = 25;
         g.setFill(Color.WHITE);
         g.fillRect(0, 0, canvasWidth, canvasHeight);
-        g.setFill(Color.BLACK);
-        g.fillRect(0, 0, markWidth, markWidth);
-        g.fillRect(canvasWidth - markWidth, 0, markWidth, markWidth);
-        g.fillRect(0, canvasHeight - markWidth, markWidth, markWidth);
-        g.fillRect(canvasWidth - markWidth, canvasHeight - markWidth, markWidth, markWidth);
+        for (CalibrationPoint point : calibrationPoints) {
+            point.draw(g, numPlaced);
+        }
     }
 
     private void drawBoardLines(GraphicsContext g) {
@@ -51,6 +57,28 @@ public class ProjectionController extends ViewController {
                 g.setFill(board[i][j].getColor());
                 g.fillRect(j * 200, i * 200, 200, 200);
             }
+        }
+    }
+
+    private static class CalibrationPoint {
+        int x, y, width, height, seqNum;
+        public CalibrationPoint(int x, int y, int width, int height, int seqNum) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+            this.seqNum = seqNum;
+        }
+
+        public void draw(GraphicsContext g, int currentNum) {
+            if (currentNum < seqNum) {
+                g.setFill(Color.BLACK);
+            } else if (currentNum == seqNum) {
+                g.setFill(Color.RED);
+            } else {
+                g.setFill(Color.LIMEGREEN);
+            }
+            g.fillRect(x, y, width, height);
         }
     }
 }

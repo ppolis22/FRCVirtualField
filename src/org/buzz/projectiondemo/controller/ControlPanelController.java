@@ -10,17 +10,14 @@ import javafx.scene.image.ImageView;
 import org.buzz.projectiondemo.model.ConvertableMat;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.videoio.VideoCapture;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class ControlPanelController extends ViewController {
 
     private ObjectProperty<String> debugOutputProp;
+    public static final int MAIN_FRAME_DISPLAY_WIDTH = 320;
+    private static final int MINOR_FRAME_DISPLAY_WIDTH = 320;
 
     @FXML private ImageView cameraFrame;
     @FXML private ImageView maskImage;
@@ -37,11 +34,12 @@ public class ControlPanelController extends ViewController {
 
     @FXML
     public void initialize() {
-        cameraFrame.setFitWidth(300);
+        cameraFrame.setFitWidth(MAIN_FRAME_DISPLAY_WIDTH);
         cameraFrame.setPreserveRatio(true);
-        maskImage.setFitWidth(300);
+        cameraFrame.setOnMouseClicked(e -> appController.updateCornerPoint(e.getX(), e.getY()));
+        maskImage.setFitWidth(MINOR_FRAME_DISPLAY_WIDTH);
         maskImage.setPreserveRatio(true);
-        morphImage.setFitWidth(300);
+        morphImage.setFitWidth(MINOR_FRAME_DISPLAY_WIDTH);
         morphImage.setPreserveRatio(true);
         debugOutputProp = new SimpleObjectProperty<>();
         debugOutput.textProperty().bind(debugOutputProp);
@@ -101,11 +99,5 @@ public class ControlPanelController extends ViewController {
 
     public void setContinueButtonState(boolean enabled) {
         continueButton.setDisable(!enabled);
-    }
-
-    public void drawCalibrationPoints(ConvertableMat mainMat, List<Point> points) {
-        for (Point point : points) {
-            Imgproc.circle(mainMat, point, 5, new Scalar(0, 0, 255));
-        }
     }
 }

@@ -7,6 +7,7 @@ import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -15,10 +16,20 @@ public class GameStateCalculator {
 
     private final static double ONE_THIRD = 1.0 / 3.0;
     private final static double TWO_THIRDS = 2.0 / 3.0;
+    private final List<Point> cornerPoints = new ArrayList<>();
     private final MatOfPoint2f[][] boardZones = new MatOfPoint2f[3][3];
 
-    public void calibrate(Point topLeft, Point topRight, Point bottomLeft, Point bottomRight) {
-        Point[][] gridPoints = computeGridPoints(topLeft, topRight, bottomLeft, bottomRight);
+    public void addCornerPoint(Point point) {
+        cornerPoints.add(point);
+    }
+
+    public int getNumCornersPlaced() {
+        return cornerPoints.size();
+    }
+
+    public void calibrateToSetPoints() {   // topleft, topright, bottomleft, bottomright
+        Point[][] gridPoints = computeGridPoints(cornerPoints.get(0), cornerPoints.get(1),
+                cornerPoints.get(2), cornerPoints.get(3));
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 boardZones[i][j] = new MatOfPoint2f(

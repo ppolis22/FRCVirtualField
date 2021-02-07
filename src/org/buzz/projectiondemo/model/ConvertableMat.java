@@ -7,7 +7,7 @@ import org.opencv.core.Mat;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 
-public class ConvertableMat extends Mat {
+public class ConvertableMat extends Mat {   // TODO add constructor from Mat
 
     public Image asImage() {
         try {
