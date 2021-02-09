@@ -29,9 +29,11 @@ public class AppController {
                          ProjectionController projectionController) {
         this.controlPanelController = controlPanelController;
         this.projectionController = projectionController;
+    }
 
-        this.controlPanelController.setAppController(this);
-        this.projectionController.setAppController(this);
+    public void initialize() {
+        controlPanelController.setAppController(this);
+        projectionController.setAppController(this);
     }
 
     public void toggleProcessingLoop() {
@@ -101,14 +103,15 @@ public class AppController {
         frame.copyTo(mainMat);
         int cornersPlaced = gameStateCalculator.getNumCornersPlaced();
         projectionController.showCalibrationImage(cornersPlaced);
-        controlPanelController.setContinueButtonState(cornersPlaced == 4);
+        controlPanelController.setContinueButtonState(cornersPlaced == 4 && appState == AppState.CALIBRATING);
         controlPanelController.drawMainImage(mainMat);
     }
 
     private void detectObjects() {
         Scalar minHsvValues = controlPanelController.getMinHsvValues();
         Scalar maxHsvValues = controlPanelController.getMaxHsvValues();
-        ProcessResult result= frameProcessor.process(camera.getFrame(), minHsvValues, maxHsvValues);
+        boolean invertHue = controlPanelController.invertHue();
+        ProcessResult result= frameProcessor.process(camera.getFrame(), minHsvValues, maxHsvValues, invertHue);
 
         MatOfPoint2f[][] zones = gameStateCalculator.getBoardZones();
         controlPanelController.drawBoardZones(zones, result.mainMat);

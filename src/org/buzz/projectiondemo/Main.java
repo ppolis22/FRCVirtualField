@@ -32,6 +32,7 @@ public class Main extends Application {
         projectionStage.show();
 
         AppController appController = new AppController(controlPanelController, projectionController);
+        appController.initialize();
     }
 
 

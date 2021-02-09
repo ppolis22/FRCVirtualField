@@ -27,7 +27,7 @@ public class GameStateCalculator {
         return cornerPoints.size();
     }
 
-    public void calibrateToSetPoints() {   // topleft, topright, bottomleft, bottomright
+    public void calibrateToSetPoints() {
         Point[][] gridPoints = computeGridPoints(cornerPoints.get(0), cornerPoints.get(1),
                 cornerPoints.get(2), cornerPoints.get(3));
         for (int i = 0; i < 3; i++) {
@@ -42,14 +42,16 @@ public class GameStateCalculator {
     public GameState calculate(List<Contour> contours) {
         GameState gameState = new GameState();
         try {
-            Contour largestContour = Collections.max(contours);
-            Point centerPoint = largestContour.getCenterPoint();
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    double testResult = Imgproc.pointPolygonTest(boardZones[i][j], centerPoint, false);
-                    if (testResult > 0) {
-                        gameState.setSquareValue(SquareColor.RED, i, j);
-                        return gameState;
+            contours.sort(Collections.reverseOrder());
+            for (Contour contour : contours) {
+                Point centerPoint = contour.getCenterPoint();
+                for (int i = 0; i < 3; i++) {
+                    for (int j = 0; j < 3; j++) {
+                        double testResult = Imgproc.pointPolygonTest(boardZones[i][j], centerPoint, false);
+                        if (testResult > 0) {
+                            gameState.setSquareValue(SquareColor.PINK, i, j);
+                            return gameState;
+                        }
                     }
                 }
             }

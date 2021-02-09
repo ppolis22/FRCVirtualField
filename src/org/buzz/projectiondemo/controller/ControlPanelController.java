@@ -4,6 +4,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.image.ImageView;
@@ -30,6 +31,7 @@ public class ControlPanelController extends ViewController {
     @FXML private Slider saturationStop;
     @FXML private Slider valueStart;
     @FXML private Slider valueStop;
+    @FXML private CheckBox invertHue;
     @FXML private Label debugOutput;
 
     @FXML
@@ -69,6 +71,10 @@ public class ControlPanelController extends ViewController {
 
     public Scalar getMaxHsvValues() {
         return new Scalar(hueStop.getValue(), saturationStop.getValue(), valueStop.getValue());
+    }
+
+    public boolean invertHue() {
+        return invertHue.isSelected();
     }
 
     public void drawBoardZones(MatOfPoint2f[][] zoneContours, ConvertableMat destinationMat) {

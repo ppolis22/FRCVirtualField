@@ -8,6 +8,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.CheckBox?>
 <BorderPane fx:controller="org.buzz.projectiondemo.controller.ControlPanelController" xmlns:fx="http://javafx.com/fxml">
     <right>
         <VBox alignment="CENTER">
@@ -15,9 +16,9 @@
                 <Insets right="10" left="10" />
             </padding>
             <Label text="Hue Start" />
-            <Slider fx:id="hueStart" min="0" max="180" value="0" blockIncrement="1" />
+            <Slider fx:id="hueStart" min="0" max="179" value="0" blockIncrement="1" />
             <Label text="Hue Stop" />
-            <Slider fx:id="hueStop" min="0" max="180" value="180" blockIncrement="1" />
+            <Slider fx:id="hueStop" min="0" max="179" value="179" blockIncrement="1" />
             <Label text="Saturation Start" />
             <Slider fx:id="saturationStart" min="0" max="255" value="122" blockIncrement="1" />
             <Label text="Saturation Stop" />
@@ -26,6 +27,7 @@
             <Slider fx:id="valueStart" min="0" max="255" value="92" blockIncrement="1" />
             <Label text="Value Stop" />
             <Slider fx:id="valueStop" min="0" max="255" value="164" blockIncrement="1" />
+            <CheckBox fx:id="invertHue" text="Invert Hue" selected="true" />
         </VBox>
     </right>
     <center>

@@ -10,11 +10,11 @@ import java.util.stream.Collectors;
 
 public class FrameProcessor {
 
-    public ProcessResult process(Mat input, Scalar minThreshVals, Scalar maxThreshVals) {
+    public ProcessResult process(Mat input, Scalar minThreshVals, Scalar maxThreshVals, boolean invertHue) {
         ConvertableMat mainMat = new ConvertableMat();
         input.copyTo(mainMat);
         ConvertableMat blurredMat = blur(mainMat);
-        ConvertableMat threshMat = applyHSVFilter(blurredMat, minThreshVals, maxThreshVals);
+        ConvertableMat threshMat = applyHSVFilter(blurredMat, minThreshVals, maxThreshVals, invertHue);
         ConvertableMat denoisedMat = denoiseImage(threshMat);
         List<Contour> contours = findContours(denoisedMat);
 //        drawContours(contours, mainMat);
@@ -28,11 +28,23 @@ public class FrameProcessor {
         return blurredMat;
     }
 
-    private ConvertableMat applyHSVFilter(Mat inputMat, Scalar minThreshVals, Scalar maxThreshVals) {
+    private ConvertableMat applyHSVFilter(Mat inputMat, Scalar minThreshVals, Scalar maxThreshVals, boolean invertHue) {
         Mat hsvMat = new Mat();
         ConvertableMat threshMat = new ConvertableMat();
         Imgproc.cvtColor(inputMat, hsvMat, Imgproc.COLOR_BGR2HSV);
-        Core.inRange(hsvMat, minThreshVals, maxThreshVals, threshMat);
+        if (invertHue) {
+            ConvertableMat threshMatLower = new ConvertableMat();
+            ConvertableMat threshMatUpper = new ConvertableMat();
+            Scalar zeroHuePoint = new Scalar(0.0, minThreshVals.val[1], minThreshVals.val[2]);
+            Scalar firstMidPoint = new Scalar(minThreshVals.val[0], maxThreshVals.val[1], maxThreshVals.val[2]);
+            Scalar secondMidPoint = new Scalar(maxThreshVals.val[0], minThreshVals.val[1], minThreshVals.val[2]);
+            Scalar maxHuePoint = new Scalar(180.0, maxThreshVals.val[1], maxThreshVals.val[2]);
+            Core.inRange(hsvMat, zeroHuePoint, firstMidPoint, threshMatLower);
+            Core.inRange(hsvMat, secondMidPoint, maxHuePoint, threshMatUpper);
+            Core.bitwise_or(threshMatLower, threshMatUpper, threshMat);
+        } else {
+            Core.inRange(hsvMat, minThreshVals, maxThreshVals, threshMat);
+        }
         return threshMat;
     }
 
