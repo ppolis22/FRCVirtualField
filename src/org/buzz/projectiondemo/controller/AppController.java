@@ -58,7 +58,7 @@ public class AppController {
     private void startProcessingLoop() {
         try {
             camera.start();
-            Mat sampleFrame = camera.getFrame();
+            Mat sampleFrame = camera.getFrame().getMat();
             cameraFrameDisplayRatio = (double)sampleFrame.width() / (double)ControlPanelController.MAIN_FRAME_DISPLAY_WIDTH;
             System.out.println("Ratio: " + cameraFrameDisplayRatio);
             isProcessing = true;
@@ -98,34 +98,39 @@ public class AppController {
     }
 
     private void calibrateToGrid() {
-        Mat frame = camera.getFrame();
-        ConvertableMat mainMat = new ConvertableMat();
-        frame.copyTo(mainMat);
+        ConvertableMat frame = camera.getFrame();
         int cornersPlaced = gameStateCalculator.getNumCornersPlaced();
         projectionController.showCalibrationImage(cornersPlaced);
         controlPanelController.setContinueButtonState(cornersPlaced == 4 && appState == AppState.CALIBRATING);
-        controlPanelController.drawMainImage(mainMat);
+        controlPanelController.drawMainImage(frame);
     }
 
     private void detectObjects() {
-        Scalar minHsvValues = controlPanelController.getMinHsvValues();
-        Scalar maxHsvValues = controlPanelController.getMaxHsvValues();
-        boolean invertHue = controlPanelController.invertHue();
-        ProcessResult result= frameProcessor.process(camera.getFrame(), minHsvValues, maxHsvValues, invertHue);
+        Scalar minHsvObj1Values = controlPanelController.getMinHsvObj1Values();
+        Scalar maxHsvObj1Values = controlPanelController.getMaxHsvObj1Values();
+        boolean invertObj1Hue = controlPanelController.invertObj1Hue();
+        Scalar minHsvObj2Values = controlPanelController.getMinHsvObj2Values();
+        Scalar maxHsvObj2Values = controlPanelController.getMaxHsvObj2Values();
+        boolean invertObj2Hue = controlPanelController.invertObj2Hue();
+
+        ConvertableMat cameraFrame = camera.getFrame();
+
+        ProcessResult obj1Result = frameProcessor.process(cameraFrame.getMat(), minHsvObj1Values, maxHsvObj1Values, invertObj1Hue);
+        ProcessResult obj2Result = frameProcessor.process(cameraFrame.getMat(), minHsvObj2Values, maxHsvObj2Values, invertObj2Hue);
 
         MatOfPoint2f[][] zones = gameStateCalculator.getBoardZones();
-        controlPanelController.drawBoardZones(zones, result.mainMat);
+        controlPanelController.drawBoardZones(zones, cameraFrame);
 
-        GameState gameState = gameStateCalculator.calculate(result.contours);
+        GameState gameState = gameStateCalculator.calculate(obj1Result.contours, obj2Result.contours);
         projectionController.updateProjectionView(gameState);
 
-        result.debugMessage = controlPanelController.getMinHsvValues().toString() + " -> " +
-                controlPanelController.getMaxHsvValues().toString();
+        String debugMessage = controlPanelController.getMinHsvObj2Values().toString() + " -> " +
+                controlPanelController.getMaxHsvObj2Values().toString();
 
-        controlPanelController.drawMainImage(result.mainMat);
-        controlPanelController.drawThreshImage(result.threshMat);
-        controlPanelController.drawDenoisedImage(result.denoiseMat);
-        controlPanelController.writeDebugString(result.debugMessage);
+        controlPanelController.drawMainImage(cameraFrame);
+        controlPanelController.drawFilteredImage1(obj1Result.denoiseMat);
+        controlPanelController.drawFilteredImage2(obj2Result.denoiseMat);
+        controlPanelController.writeDebugString(debugMessage);
     }
 
     private enum AppState {

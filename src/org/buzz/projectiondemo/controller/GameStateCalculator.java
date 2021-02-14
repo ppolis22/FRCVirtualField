@@ -10,7 +10,6 @@ import org.opencv.imgproc.Imgproc;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 public class GameStateCalculator {
 
@@ -39,36 +38,31 @@ public class GameStateCalculator {
         }
     }
 
-    public GameState calculate(List<Contour> contours) {
+    public GameState calculate(List<Contour> obj1Contours, List<Contour> obj2Contours) {
         GameState gameState = new GameState();
-        try {
-            contours.sort(Collections.reverseOrder());
-            for (Contour contour : contours) {
-                Point centerPoint = contour.getCenterPoint();
-                for (int i = 0; i < 3; i++) {
-                    for (int j = 0; j < 3; j++) {
-                        double testResult = Imgproc.pointPolygonTest(boardZones[i][j], centerPoint, false);
-                        if (testResult > 0) {
-                            gameState.setSquareValue(SquareColor.PINK, i, j);
-                            return gameState;
-                        }
+        updateState(obj1Contours, gameState, SquareColor.RED);
+        updateState(obj2Contours, gameState, SquareColor.BLUE);
+        return gameState;
+    }
+
+    private void updateState(List<Contour> contours, GameState state, SquareColor color) {
+        contours.sort(Collections.reverseOrder());
+        for (Contour contour : contours) {
+            Point centerPoint = contour.getCenterPoint();
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    double testResult = Imgproc.pointPolygonTest(boardZones[i][j], centerPoint, false);
+                    if (testResult > 0) {
+                        state.setSquareValue(color, i, j);
+                        return;
                     }
                 }
             }
-        } catch (NoSuchElementException e) {
-            // we can safely eat this
         }
-        return gameState;
     }
 
     public MatOfPoint2f[][] getBoardZones() {
         return boardZones;
-    }
-
-    private Point calculatePointAlongLine(Point start, Point end, double percent) {
-        double dy = end.y - start.y;
-        double dx = end.x - start.x;
-        return new Point(start.x + (dx * percent), start.y + (dy * percent));
     }
 
     private Point[][] computeGridPoints(Point topLeft, Point topRight, Point bottomLeft, Point bottomRight) {
@@ -98,4 +92,9 @@ public class GameStateCalculator {
         return gridPoints;
     }
 
+    private Point calculatePointAlongLine(Point start, Point end, double percent) {
+        double dy = end.y - start.y;
+        double dx = end.x - start.x;
+        return new Point(start.x + (dx * percent), start.y + (dy * percent));
+    }
 }

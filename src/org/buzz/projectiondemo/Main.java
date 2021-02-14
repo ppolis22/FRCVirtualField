@@ -20,7 +20,7 @@ public class Main extends Application {
         Parent controlPanelRoot = loader.load();
         ControlPanelController controlPanelController = loader.getController();
         primaryStage.setTitle("Control Panel");
-        primaryStage.setScene(new Scene(controlPanelRoot, 1000, 600));
+        primaryStage.setScene(new Scene(controlPanelRoot, 1200, 800));
         primaryStage.show();
 
         loader = new FXMLLoader(getClass().getResource("projection.fxml"));

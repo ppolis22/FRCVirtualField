@@ -22,9 +22,9 @@ public class Camera {
         }
     }
 
-    public Mat getFrame() {
+    public ConvertableMat getFrame() {
         Mat frame = new Mat();
         videoCapture.read(frame);
-        return frame;
+        return new ConvertableMat(frame);
     }
 }

@@ -11,30 +11,29 @@ import java.util.stream.Collectors;
 public class FrameProcessor {
 
     public ProcessResult process(Mat input, Scalar minThreshVals, Scalar maxThreshVals, boolean invertHue) {
-        ConvertableMat mainMat = new ConvertableMat();
+        Mat mainMat = new Mat();
         input.copyTo(mainMat);
-        ConvertableMat blurredMat = blur(mainMat);
-        ConvertableMat threshMat = applyHSVFilter(blurredMat, minThreshVals, maxThreshVals, invertHue);
-        ConvertableMat denoisedMat = denoiseImage(threshMat);
+        Mat blurredMat = blur(mainMat);
+        Mat threshMat = applyHSVFilter(blurredMat, minThreshVals, maxThreshVals, invertHue);
+        Mat denoisedMat = denoiseImage(threshMat);
         List<Contour> contours = findContours(denoisedMat);
-//        drawContours(contours, mainMat);
-        return new ProcessResult(contours, mainMat, threshMat, denoisedMat,
+        return new ProcessResult(contours, new ConvertableMat(threshMat), new ConvertableMat(denoisedMat),
                 "Contours found: " + contours.size());
     }
 
-    private ConvertableMat blur(Mat inputMat) {
-        ConvertableMat blurredMat = new ConvertableMat();
+    private Mat blur(Mat inputMat) {
+        Mat blurredMat = new Mat();
         Imgproc.blur(inputMat, blurredMat, new Size(5, 5));
         return blurredMat;
     }
 
-    private ConvertableMat applyHSVFilter(Mat inputMat, Scalar minThreshVals, Scalar maxThreshVals, boolean invertHue) {
+    private Mat applyHSVFilter(Mat inputMat, Scalar minThreshVals, Scalar maxThreshVals, boolean invertHue) {
         Mat hsvMat = new Mat();
-        ConvertableMat threshMat = new ConvertableMat();
+        Mat threshMat = new Mat();
         Imgproc.cvtColor(inputMat, hsvMat, Imgproc.COLOR_BGR2HSV);
         if (invertHue) {
-            ConvertableMat threshMatLower = new ConvertableMat();
-            ConvertableMat threshMatUpper = new ConvertableMat();
+            Mat threshMatLower = new Mat();
+            Mat threshMatUpper = new Mat();
             Scalar zeroHuePoint = new Scalar(0.0, minThreshVals.val[1], minThreshVals.val[2]);
             Scalar firstMidPoint = new Scalar(minThreshVals.val[0], maxThreshVals.val[1], maxThreshVals.val[2]);
             Scalar secondMidPoint = new Scalar(maxThreshVals.val[0], minThreshVals.val[1], minThreshVals.val[2]);
@@ -48,16 +47,13 @@ public class FrameProcessor {
         return threshMat;
     }
 
-    private ConvertableMat denoiseImage(Mat inputMat) {
-        ConvertableMat deNoisedMat = new ConvertableMat();
+    private Mat denoiseImage(Mat inputMat) {
+        Mat deNoisedMat = new Mat();
         Mat dilateElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(24, 24));
         Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(12, 12));
 
         Imgproc.erode(inputMat, deNoisedMat, erodeElement);
-//        Imgproc.erode(deNoisedMat, deNoisedMat, erodeElement);
-
         Imgproc.dilate(deNoisedMat, deNoisedMat, dilateElement);
-//        Imgproc.dilate(deNoisedMat, deNoisedMat, dilateElement);
 
         return deNoisedMat;
     }
@@ -68,14 +64,5 @@ public class FrameProcessor {
 
         Imgproc.findContours(inputMat, contours, hierarchy, Imgproc.RETR_CCOMP, Imgproc.CHAIN_APPROX_SIMPLE);
         return contours.stream().map(Contour::new).collect(Collectors.toList());
-    }
-
-    private void drawContours(List<Contour> contours, Mat toRenderOn) {
-        if (!contours.isEmpty()) {
-            for (int i = 0; i < contours.size(); i++) {
-                Imgproc.drawContours(toRenderOn,
-                        contours.subList(i, i + 1).stream().map(Contour::getMatOfPoint).collect(Collectors.toList()), -1, new Scalar(250, 0, 0));
-            }
-        }
     }
 }

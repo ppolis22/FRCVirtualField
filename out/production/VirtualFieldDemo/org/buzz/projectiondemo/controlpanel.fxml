@@ -16,18 +16,36 @@
                 <Insets right="10" left="10" />
             </padding>
             <Label text="Hue Start" />
-            <Slider fx:id="hueStart" min="0" max="179" value="0" blockIncrement="1" />
+            <Slider fx:id="hueStartObj1" min="0" max="179" value="0" blockIncrement="1" />
             <Label text="Hue Stop" />
-            <Slider fx:id="hueStop" min="0" max="179" value="179" blockIncrement="1" />
+            <Slider fx:id="hueStopObj1" min="0" max="179" value="179" blockIncrement="1" />
             <Label text="Saturation Start" />
-            <Slider fx:id="saturationStart" min="0" max="255" value="122" blockIncrement="1" />
+            <Slider fx:id="saturationStartObj1" min="0" max="255" value="122" blockIncrement="1" />
             <Label text="Saturation Stop" />
-            <Slider fx:id="saturationStop" min="0" max="255" value="255" blockIncrement="1" />
+            <Slider fx:id="saturationStopObj1" min="0" max="255" value="255" blockIncrement="1" />
             <Label text="Value Start" />
-            <Slider fx:id="valueStart" min="0" max="255" value="92" blockIncrement="1" />
+            <Slider fx:id="valueStartObj1" min="0" max="255" value="92" blockIncrement="1" />
             <Label text="Value Stop" />
-            <Slider fx:id="valueStop" min="0" max="255" value="164" blockIncrement="1" />
-            <CheckBox fx:id="invertHue" text="Invert Hue" selected="true" />
+            <Slider fx:id="valueStopObj1" min="0" max="255" value="164" blockIncrement="1" />
+            <CheckBox fx:id="invertHueObj1" text="Invert Hue" selected="true" />
+
+            <Label text=" " />
+            <Separator />
+            <Label text=" " />
+
+            <Label text="Hue Start" />
+            <Slider fx:id="hueStartObj2" min="0" max="179" value="0" blockIncrement="1" />
+            <Label text="Hue Stop" />
+            <Slider fx:id="hueStopObj2" min="0" max="179" value="179" blockIncrement="1" />
+            <Label text="Saturation Start" />
+            <Slider fx:id="saturationStartObj2" min="0" max="255" value="122" blockIncrement="1" />
+            <Label text="Saturation Stop" />
+            <Slider fx:id="saturationStopObj2" min="0" max="255" value="255" blockIncrement="1" />
+            <Label text="Value Start" />
+            <Slider fx:id="valueStartObj2" min="0" max="255" value="92" blockIncrement="1" />
+            <Label text="Value Stop" />
+            <Slider fx:id="valueStopObj2" min="0" max="255" value="164" blockIncrement="1" />
+            <CheckBox fx:id="invertHueObj2" text="Invert Hue" selected="false" />
         </VBox>
     </right>
     <center>
@@ -37,8 +55,8 @@
                 <padding>
                     <Insets right="10" left="10" />
                 </padding>
-                <ImageView fx:id="maskImage" />
-                <ImageView fx:id="morphImage" />
+                <ImageView fx:id="filteredImage1" />
+                <ImageView fx:id="filteredImage2" />
             </VBox>
         </HBox>
     </center>

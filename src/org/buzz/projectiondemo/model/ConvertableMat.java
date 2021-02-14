@@ -7,11 +7,25 @@ import org.opencv.core.Mat;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 
-public class ConvertableMat extends Mat {   // TODO add constructor from Mat
+public class ConvertableMat {
+
+    private final Mat mat;
+
+    public ConvertableMat() {
+        this.mat = new Mat();
+    }
+
+    public ConvertableMat(Mat mat) {
+        this.mat = mat;
+    }
+
+    public Mat getMat() {
+        return mat;
+    }
 
     public Image asImage() {
         try {
-            return SwingFXUtils.toFXImage(matToBufferedImage(this), null);
+            return SwingFXUtils.toFXImage(matToBufferedImage(mat), null);
         } catch (Exception e) {
             System.out.println("Cannot convert the Mat object: " + e);
             return null;
