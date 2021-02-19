@@ -52,6 +52,7 @@ public class AppController {
     public void lockInCalibration() {
         controlPanelController.setContinueButtonState(false);
         gameStateCalculator.calibrateToSetPoints();
+        gameStateCalculator.setRandomTargetState();
         appState = AppState.FINDING_OBJECTS;
     }
 

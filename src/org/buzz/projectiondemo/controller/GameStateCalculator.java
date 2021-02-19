@@ -15,8 +15,11 @@ public class GameStateCalculator {
 
     private final static double ONE_THIRD = 1.0 / 3.0;
     private final static double TWO_THIRDS = 2.0 / 3.0;
+    private final static double MIN_CONTOUR_SIZE = 25;  // TODO make configurable
+    private final static int MAX_NUM_CONTOURS = 5;
     private final List<Point> cornerPoints = new ArrayList<>();
     private final MatOfPoint2f[][] boardZones = new MatOfPoint2f[3][3];
+    private final GameState gameState = new GameState();
 
     public void addCornerPoint(Point point) {
         cornerPoints.add(point);
@@ -24,6 +27,10 @@ public class GameStateCalculator {
 
     public int getNumCornersPlaced() {
         return cornerPoints.size();
+    }
+
+    public void setRandomTargetState() {
+        gameState.randomizeTargetBoard();
     }
 
     public void calibrateToSetPoints() {
@@ -38,23 +45,25 @@ public class GameStateCalculator {
         }
     }
 
-    public GameState calculate(List<Contour> obj1Contours, List<Contour> obj2Contours) {
-        GameState gameState = new GameState();
-        updateState(obj1Contours, gameState, SquareColor.RED);
-        updateState(obj2Contours, gameState, SquareColor.BLUE);
+    public GameState calculate(List<Contour> color1Contours, List<Contour> color2Contours) {
+        gameState.clearDetectedBoard();
+        updateState(color1Contours, gameState, SquareColor.RED);
+        updateState(color2Contours, gameState, SquareColor.BLUE);
         return gameState;
     }
 
     private void updateState(List<Contour> contours, GameState state, SquareColor color) {
+        int validContours = 0;
         contours.sort(Collections.reverseOrder());
         for (Contour contour : contours) {
-            Point centerPoint = contour.getCenterPoint();
+            if (validContours >= MAX_NUM_CONTOURS) { return; }
+            if (contour.getArea() < MIN_CONTOUR_SIZE) { continue; }
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-                    double testResult = Imgproc.pointPolygonTest(boardZones[i][j], centerPoint, false);
+                    double testResult = Imgproc.pointPolygonTest(boardZones[i][j], contour.getCenterPoint(), false);
                     if (testResult > 0) {
-                        state.setSquareValue(color, i, j);
-                        return;
+                        state.setDetectedValue(color, i, j);
+                        validContours++;
                     }
                 }
             }

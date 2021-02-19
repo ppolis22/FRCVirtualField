@@ -29,8 +29,7 @@ public class ProjectionController extends ViewController {
 
     public void updateProjectionView(GameState gameState) {
         GraphicsContext g = canvas.getGraphicsContext2D();
-        SquareColor[][] board = gameState.getBoard();
-        drawSquares(board, g);
+        drawSquares(gameState, g);
         drawBoardLines(g);
     }
 
@@ -51,13 +50,37 @@ public class ProjectionController extends ViewController {
         g.fillRect(0, 395, 600, 10);
     }
 
-    private void drawSquares(SquareColor[][] board, GraphicsContext g) {
+    private void drawSquares(GameState gameState, GraphicsContext g) {
+        SquareColor[][] targetBoard = gameState.getTargetBoard();
+        SquareColor[][] detectedBoard = gameState.getDetectedBoard();
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                g.setFill(board[i][j].getColor());
-                g.fillRect(j * 200, i * 200, 200, 200);
+                SquareColor target = targetBoard[i][j];
+                SquareColor detected = detectedBoard[i][j];
+                if (target == detected) {
+                    drawMatchSquare(j, i, target, g);
+                } else {
+                    drawMismatchSquare(j, i, target, detected, g);
+                }
             }
         }
+    }
+
+    private void drawMatchSquare(int col, int row, SquareColor color, GraphicsContext g) {
+        g.setFill(color.getColor());
+        g.fillRect(col * 200, row * 200, 200, 200);
+    }
+
+    private void drawMismatchSquare(int col, int row, SquareColor targetColor,
+                                    SquareColor detectedColor, GraphicsContext g) {
+        g.setFill(targetColor.getColor());
+        g.fillRect(col * 200, row * 200, 200, 200);
+        g.setFill(SquareColor.NONE.getColor());
+        g.fillRect(col * 200 + 25, row * 200 + 25, 150, 150);
+        g.setFill(SquareColor.NONE.getColor());
+        g.setStroke(detectedColor.getColor());
+        g.setLineWidth(20);
+        g.strokeLine(col * 200 + 50, row * 200 + 50, col * 200 + 150, row * 200 + 150);
     }
 
     private static class CalibrationPoint {
